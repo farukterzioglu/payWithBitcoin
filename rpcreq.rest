@@ -1,0 +1,15 @@
+###
+
+POST http://127.0.0.1:18443 HTTP/1.1
+content-type: text/plain
+authorization: Basic myuser SomeDecentp4ssw0rd
+
+{"jsonrpc":"1.0","id":"curltext","method":"getblockchaininfo","params":[]}
+
+###
+
+POST http://127.0.0.1:18443 HTTP/1.1
+content-type: text/plain
+authorization: Basic myuser SomeDecentp4ssw0rd
+
+{"jsonrpc":"1.0","id":"curltext","method":"listunspent","params":[]}
