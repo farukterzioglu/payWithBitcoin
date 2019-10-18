@@ -1,6 +1,6 @@
 ###
 
-POST http://127.0.0.1:18443 HTTP/1.1
+POST http://127.0.0.1:443 HTTP/1.1
 content-type: text/plain
 authorization: Basic myuser SomeDecentp4ssw0rd
 
@@ -8,7 +8,7 @@ authorization: Basic myuser SomeDecentp4ssw0rd
 
 ###
 
-POST http://127.0.0.1:18443 HTTP/1.1
+POST http://127.0.0.1:443 HTTP/1.1
 content-type: text/plain
 authorization: Basic myuser SomeDecentp4ssw0rd
 
