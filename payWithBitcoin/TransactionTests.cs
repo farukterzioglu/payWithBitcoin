@@ -14,30 +14,25 @@ namespace Tests
         RPCClient client;
         Network network;
 
-        Task<decimal> GetBtcOfTl(int salary)
+        Task<decimal> GetBtcOf1Tl()
         {
-            return Task.FromResult<decimal>(0.0001m * salary);
+            return Task.FromResult<decimal>(0.0001m);
         }
 
-        Task<int> GetSalary()
+        Task<Dictionary<string, int>> GetSalaryList()
         {
-            return Task.FromResult(1);
-        }
-
-        List<string> GetAddresses()
-        {
-            return new List<string>(){
-                "2N2LGTF2XWA5png8mT2fbHRzY9P4XDLWvGc",
-                "2N94h5bWDAFNsd7SB1f3cQ6RUMmoMaA44tQ",
-                "2MsjZP4DJmZeV1fRpAw8NcJWiibYopWL7fg",
-                "2N1cHqXYLas7bnLoCtMppD1yKtrXjRSmB5M",
-                "2NA9di1yBdHiwgJJVB27nPxpAc8YDpmdSS1"    
+            var salaries = new Dictionary<string, int>(){
+                { "2N2LGTF2XWA5png8mT2fbHRzY9P4XDLWvGc", 2500},
+                { "2N94h5bWDAFNsd7SB1f3cQ6RUMmoMaA44tQ", 4500},
+                { "2MsjZP4DJmZeV1fRpAw8NcJWiibYopWL7fg", 2250},
+                { "2N1cHqXYLas7bnLoCtMppD1yKtrXjRSmB5M", 10000},
+                { "2NA9di1yBdHiwgJJVB27nPxpAc8YDpmdSS1", 12500}
             };
+            return Task.FromResult(salaries);
         }
 
-        int salary;
-        decimal btcSalary;
-        List<string> addressList;
+        Dictionary<string, int> salaries;
+        decimal btcPerTl;
         Money totalPaymentAmountBtc;
         
         [SetUp]
@@ -51,11 +46,11 @@ namespace Tests
                 address: new Uri("http://127.0.0.1:443"),
                 network: network);
 
-            salary = await GetSalary();
-            btcSalary = await GetBtcOfTl(salary);
-            addressList = GetAddresses();
+            salaries = await GetSalaryList();
+            btcPerTl = await GetBtcOf1Tl();
 
-            totalPaymentAmountBtc = new Money(addressList.Count * btcSalary, MoneyUnit.BTC);
+            var totalPayment = salaries.Sum((pair) => pair.Value);
+            totalPaymentAmountBtc = new Money(totalPayment * btcPerTl, MoneyUnit.BTC);
         }
 
         [Test]
@@ -75,7 +70,7 @@ namespace Tests
                 throw new Exception("Balance is not enough!");
             }
             
-            // Create the transactionand add selected inputs 
+            // Create a transaction and add selected inputs 
             var transaction = Transaction.Create(network);
             foreach (var input in inputList)
             {
@@ -83,12 +78,12 @@ namespace Tests
             }
             
             // Add outputs
-            foreach (var address in addressList)
+            foreach (var salary in salaries)
             {
                 transaction.Outputs.Add(new TxOut()
                 {
-                    Value = new Money(btcSalary, MoneyUnit.BTC),
-                    ScriptPubKey =  BitcoinAddress.Create(address, Network.RegTest).ScriptPubKey
+                    Value = new Money(salary.Value * btcPerTl, MoneyUnit.BTC),
+                    ScriptPubKey =  BitcoinAddress.Create(salary.Key, network).ScriptPubKey
                 });
             }
 
@@ -111,7 +106,31 @@ namespace Tests
             });
             var txHash = await client.SendRawTransactionAsync(signedTxResponse.SignedTransaction);
         }
-    
-    
+
+        [Test]
+        public async Task AutoFund()
+        {
+            // Create a transaction
+            var transaction = Transaction.Create(network);
+            
+            // Add outputs
+            foreach (var salary in salaries)
+            {
+                transaction.Outputs.Add(new TxOut()
+                {
+                    Value = new Money(salary.Value * btcPerTl, MoneyUnit.BTC),
+                    ScriptPubKey =  BitcoinAddress.Create(salary.Key, network).ScriptPubKey
+                });
+            }
+
+            // Func the transaction 
+            var fundTxResponse = await client.FundRawTransactionAsync(transaction);
+
+            // Sign & send the transaction
+            var signedTxResponse = await client.SignRawTransactionWithWalletAsync(new SignRawTransactionRequest() { 
+                Transaction = fundTxResponse.Transaction,
+            });
+            var txHash = await client.SendRawTransactionAsync(signedTxResponse.SignedTransaction);
+        }
     }
 }

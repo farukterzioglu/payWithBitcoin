@@ -6,4 +6,17 @@ ADD=$(bitcoin-cli getnewaddress)
 bitcoin-cli generatetoaddress 101 $ADD
 bitcoin-cli getwalletinfo
 bitcoin-cli listunspent
+
+// Run the unit test, note the txId
+
+bitcoin-cli getrawtransaction [TXID]
+// Check inputs and outputs
+
+bitcoin-cli generate 1
+// Note blockhash = [BLOCKHASH]
+
+bitcoin-cli getblock [BLOCKHASH]
+// Note tx hashes => [TXHASH]
+
+bitcoin-cli getrawtransaction [TXHASH] 1
 ```
